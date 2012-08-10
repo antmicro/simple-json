@@ -95,6 +95,30 @@ namespace SimpleJson
         {
             return SimpleJson.SerializeObject(this) ?? string.Empty;
         }
+
+		/// <summary>
+        /// Returns the array of T if every element is T, array of object otherwise. 
+        /// </summary>
+        /// <returns>
+        /// This array, but strongly typed if possible.
+        /// </returns>
+		public dynamic ToDynamic()
+		{
+			if(this.Count > 0)
+			{
+				return Dynamize((dynamic)this[0]);
+			}
+			return this;
+		}
+
+		private dynamic Dynamize<T>(T elem)
+		{
+			if(this.All(x=> x is T))
+			{
+				return new List<T>(this.Cast<T>());
+			}
+			return this;
+		}
     }
 
     #endregion
