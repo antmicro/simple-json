@@ -42,6 +42,7 @@
 // original json parsing code from http://techblog.procurios.nl/k/618/news/view/14605/14863/How-do-I-write-my-own-parser-for-JSON.html
 
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -937,7 +938,7 @@ namespace SimpleJson
             	
             	returnNumber = number;
             }
-            else if(str.IndexOfAny(hexArr) != -1)
+            else if(str.IndexOfAny(HexArray) != -1)
             {
             	success = false;
             	returnNumber = 0;
