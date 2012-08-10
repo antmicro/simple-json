@@ -918,6 +918,8 @@ namespace SimpleJson
         }
 #endif
 
+		private static char[] HexArray = "aAbBcCdDeEfFxX".ToCharArray();
+
         protected static object ParseNumber(char[] json, ref int index, ref bool success)
         {
             EatWhitespace(json, ref index);
@@ -927,29 +929,52 @@ namespace SimpleJson
 
             object returnNumber;
             string str = new string(json, index, charLength);
-            if (str.IndexOf(".", StringComparison.OrdinalIgnoreCase) != -1 || str.IndexOf("e", StringComparison.OrdinalIgnoreCase) != -1)
+            if( str.StartsWith("0x") )
             {
-                double number;
-                success = double.TryParse(new string(json, index, charLength), NumberStyles.Any, CultureInfo.InvariantCulture, out number);
-                returnNumber = number;
+            	long number;
+            	
+            	success = long.TryParse(str.Substring(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out number);
+            	
+            	returnNumber = number;
             }
-            else
+            else if(str.IndexOfAny(hexArr) != -1)
             {
-                long number;
-                success = long.TryParse(new string(json, index, charLength), NumberStyles.Any, CultureInfo.InvariantCulture, out number);
-                returnNumber = number;
+            	success = false;
+            	returnNumber = 0;
             }
-
+            else 
+	        {
+	            if (str.IndexOf(".", StringComparison.OrdinalIgnoreCase) != -1 || str.IndexOf("e", StringComparison.OrdinalIgnoreCase) != -1)
+	            {
+	                double number;
+	                success = double.TryParse(new string(json, index, charLength), NumberStyles.Any, CultureInfo.InvariantCulture, out number);
+	                returnNumber = number;
+	            }
+	            else
+	            {
+	                long number;
+	                success = long.TryParse(new string(json, index, charLength), NumberStyles.Any, CultureInfo.InvariantCulture, out number);
+					if(number <= int.MaxValue && number >= int.MinValue)
+					{
+						returnNumber = (int) number;
+					}
+					else
+					{
+	                	returnNumber = number;
+					}
+	            }
+			}
             index = lastIndex + 1;
             return returnNumber;
         }
+
 
         protected static int GetLastIndexOfNumber(char[] json, int index)
         {
             int lastIndex;
 
             for (lastIndex = index; lastIndex < json.Length; lastIndex++)
-                if ("0123456789+-.eE".IndexOf(json[lastIndex]) == -1) break;
+                if ("0123456789ABCDEFabcdefxX+-.eE".IndexOf(json[lastIndex]) == -1) break;
             return lastIndex - 1;
         }
 
