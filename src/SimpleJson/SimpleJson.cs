@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="SimpleJson.cs" company="The Outercurve Foundation">
 //    Copyright (c) 2011, The Outercurve Foundation.
+//    Copyright (c) 2012, Ant Micro <www.antmicro.com>.
 //
 //    Licensed under the MIT License (the "License");
 //    you may not use this file except in compliance with the License.
@@ -13,7 +14,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 // </copyright>
-// <author>Nathan Totten (ntotten.com), Jim Zimmerman (jimzimmerman.com) and Prabir Shrestha (prabir.me)</author>
+// <author>Nathan Totten (ntotten.com), Jim Zimmerman (jimzimmerman.com) and Prabir Shrestha (prabir.me), Piotr Zierhoffer (antmicro.com)</author>
 // <website>https://github.com/facebook-csharp-sdk/simple-json</website>
 //-----------------------------------------------------------------------
 
@@ -103,23 +104,23 @@ namespace SimpleJson
         /// <returns>
         /// This array, but strongly typed if possible.
         /// </returns>
-		public dynamic ToDynamic()
-		{
-			if(this.Count > 0)
-			{
-				return Dynamize((dynamic)this[0]);
-			}
-			return this;
-		}
+        public dynamic ToDynamic()
+	{
+            if(this.Count > 0)
+            {
+	        return Dynamize((dynamic)this[0]);
+            }
+            return this;
+        }
 
-		private dynamic Dynamize<T>(T elem)
-		{
-			if(this.All(x=> x is T))
-			{
-				return new List<T>(this.Cast<T>());
-			}
-			return this;
-		}
+        private dynamic Dynamize<T>(T elem)
+        {
+            if(this.All(x=> x is T))
+            {
+                return new List<T>(this.Cast<T>());
+            }
+            return this;
+        }
     }
 
     #endregion
@@ -802,6 +803,7 @@ namespace SimpleJson
             char c;
 
             EatWhitespace(json, ref index);
+            EatComment(json, ref index);
 
             // "
             c = json[index++];
@@ -919,11 +921,12 @@ namespace SimpleJson
         }
 #endif
 
-		private static char[] HexArray = "aAbBcCdDeEfFxX".ToCharArray();
+        private static char[] HexArray = "aAbBcCdDeEfFxX".ToCharArray();
 
         protected static object ParseNumber(char[] json, ref int index, ref bool success)
         {
             EatWhitespace(json, ref index);
+            EatComment(json, ref index);
 
             int lastIndex = GetLastIndexOfNumber(json, index);
             int charLength = (lastIndex - index) + 1;
@@ -985,6 +988,20 @@ namespace SimpleJson
                 if (" \t\n\r\b\f".IndexOf(json[index]) == -1) break;
         }
 
+        protected static void EatComment(char[] json, ref int index)
+        {
+            if(json[index] == '/' && json[index + 1] == '*')
+            {
+                index += 2;
+                while(index < json.Length - 1 && !(json[index] == '*' && json[index + 1] == '/'))
+                {
+                    index++;
+                }
+                index += 2;
+                EatWhitespace(json, ref index);
+            }
+        }
+
         protected static int LookAhead(char[] json, int index)
         {
             int saveIndex = index;
@@ -995,6 +1012,7 @@ namespace SimpleJson
         protected static int NextToken(char[] json, ref int index)
         {
             EatWhitespace(json, ref index);
+            EatComment(json, ref index);
 
             if (index == json.Length)
                 return TOKEN_NONE;
