@@ -561,6 +561,13 @@ namespace SimpleJson
                 char[] charArray = json.ToCharArray();
                 int index = 0;
                 @object = ParseValue(charArray, ref index, ref success);
+		EatWhitespace(charArray, ref index);
+		EatComment(charArray, ref index);
+		if(index != charArray.Length)
+		{
+			//json ends too quickly
+			success = false;
+		}
             }
             else
                 @object = null;
@@ -990,7 +997,7 @@ namespace SimpleJson
 
         protected static void EatComment(char[] json, ref int index)
         {
-            if(json[index] == '/' && json[index + 1] == '*')
+            while(index < json.Length && json[index] == '/' && json[index + 1] == '*')
             {
                 index += 2;
                 while(index < json.Length - 1 && !(json[index] == '*' && json[index + 1] == '/'))
